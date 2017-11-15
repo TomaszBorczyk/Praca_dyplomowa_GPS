@@ -25,6 +25,8 @@
 \usepackage{tabularx}
 \usepackage{hhline}
 
+\usepackage{listings}
+
 %pakiet wypisujący na marginesie etykiety równań i rysunków zdefiniowanych przez \label{}, chcąc wygenerować finalną wersję dokumentu wystarczy usunąć poniższą linię
 \usepackage{showlabels}
 
@@ -48,19 +50,95 @@
 
 
 \chapter{Wstęp}
-Częstą 
-
+Wykorzystanie systemu GPS jest obecnie powszechnie stosowane do nawigacji w każdego rodzaju transporcie. Istnieje również inna, mniej powszechna grupa zastosowania mająca na celu lokalizację przedmiotów, często osobistych. Niektóre z lokalizatorów, takie jak TrackR \cite{TrackR}, wykorzystują łączność Bluetooth, co pozwala na miniaturyzację urządzenia oraz jego niskie zużycie energii. Niestety tego typu rozwiązanie działa tylko na niewielkie odległości od urządzenia, co wymaga budowania ogromnej sieci użytkowników w celu pokrycia dużej powierzchni, co jest praktycznie niemożliwe. Zaproponowane w pracy rozwiązanie wykorzystuje lokalizację GPS i łączność z internetem. Tego typu rozwiązanie mogą służyć do monitorowania położenia roweru, torebki/plecaka, dziecka, psa, samochodu czy też tytułowych kół samochodowych. Urządzenie w połączeniu z obsługującą je aplikacją służyłoby do odnajdywania zgub, a potencjalnie skradzionych przedmiotów. Praca ta prezentuje implementację tego rodzaju uniwersalnego systemu, który pozwoli użytkownikowi monitorować i zarządzać posiadanymi urządzeniami.
 
 \section{Cel pracy}
-Celem pracy jest stworzenie systemu pozwalającego na lokalizację nadajnika GPS. 
-
+Celem pracy jest stworzenie uniwersalnego systemu pozwalającego na lokalizację urządzenia GPS, w tym:
+\begin{itemize}
+\item integrację i oprogramowanie nadajnika GPS złożonego z płytki Adafruit i funkcjonalnych modułów,
+\item serwer w Node.js obsługującego przepływ danych i zapis danych w bazie danych MongoDB,
+\item aplikację webową stworzoną w Angular 4,
+\item aplikację mobilną stworzoną w Ionic.
+\end{itemize}
+Tak stworzony system będzie został uruchomiony i wdrożony na zewnętrzne serwery.
 
 \section{Zakres pracy}
+Praca dzieli się na dwie części. W części teoretycznej opisane są:
+\begin{itemize}
+\item moduły elektroniczne,
+\item biblioteki,
+\item platformy programistyczne,
+\item narzędzia pomocnicze.
+\end{itemize}
+Część inżynierska zajmuje się opisem implementacji funkcjonalności, procesem wykonanych prac i oprogramowaniem.
 
 \chapter{Część teoretyczna}
+W części tej uwaga będzie poświęcona technologiom i poszczególnym elementom, które zostały wykorzystane w trakcie projektu. 
+
+\section{Płytka Adafruit i moduły funkcjonalne}
+Do zbudowania urządzenia monitorującego lokalizację użyto gotowe moduły bazujące na systemie Arduino. Przy wyborze elementów kierowano się głównie ich wielkością. Urządzenie traktowane jest jako prototyp - znacznie najlepsze wyniki w wielkości można by osiągnąć projektując płytkę samodzielnie i używając tylko niezbędnych elementów i złącz.
+
+Wykorzystane zostały:
+\begin{itemize}
+\item Adafruit Feather 32u4 FONA,
+\item moduł UART GPS NEO-6M z wbudowaną anteną,
+\item czujnik wychylenia / wstrząsów firmy Waveshare,
+\item akumulator litowo-polimerowy 1S 500mAh.
+\end{itemize}
+
+Główna płytka to Adafruit Feather 32u4 FONA. Wyposażona jest w mikrokontroler Atmega 32u4 oraz moduł GSM z wejściem na kartę SIM. Posiada wejścia microUSB, służące do programowania oraz zasilania płytki w trakcie debugowania, oraz zasilania dla akumulatora Li-Pol, który jest niezbędny do pracy z modułem GSM oraz zasilania układu w pracy zdalnej. Posiada piny do komunikacji po UART, co pozwala na prostą obsługę modułu GPS poprzez Serial port.
+
+Moduł GPS wyposażony jest w interfejs UART, za pomocą którego następuje przesył danych. Po dostarczeniu zasilania 2,7V-5,0V automatycznie rozpocznie próby nawiązania połączenia z satelitami. W zależności od otoczenia i warunków pogodowych pierwsza połączenie może trwać od 1 do kilku minut. Po skutecznym połączeniu moduł rozpocznie wysyłanie danych NMEA. Dane te składają się ze zdań reprezentowanych przez początkowe słowo, które określa ich typ. Każde ze zdań zawiera pewien zestaw informacji, takie jak położenie, prędkość, dane satelitarne, status i inne dane wykorzystywane w transporcie morskim i powietrznym. Informacje powtarzają się między zdaniami, ale każdy zestaw jest unikalny \cite{nmea}.
+
+Czujnik wychylenia jest bardzo prostym układem, który poza pinami zasilania posiada pin wyjściowy podający napięcie w przypadku odpowiedniego ruchu modułu.
+
+\begin{figure}
+
+\begin{center}
+    \begin{tabular}{ | p{2cm} | p{13cm} |}
+    \hline
+    Message & Description \\ \hline
+    GGA & Time, position and fix type data \\
+    GLL & Latitude, longitude\\
+    UTC & time of position fix and status \\
+    GSA & GPS receiver operating mode, satellites used in the position solution, and DOP values \\
+    GSV & Number of GPS satellites in view satellite ID numbers, elevation, azimuth, SNR values \\
+    MSS & Signal-to-noise ratio, signal strength, frequency, and bit rate from a radio-beacon receiver \\
+    RMC & Time, date, position, course and speed data \\
+    VTG & Course and speed information relative to the ground \\
+    ZDA & PPS timing message (synchronized to PPS) \\
+
+    \hline
+    \end{tabular}
+    \end{center}
+	\caption{Tabela przykładowych formatów NMEA \cite{nmea_table}}
+\end{figure}
+
+\begin{figure}
+\begin{lstlisting}[breaklines]
+  $GPRMC,030428.00,A,2232.73995,N,11404.60275,E,0.037,,070314,,,A*7E
+\end{lstlisting}
+\caption{Przykładowe zdanie GPRMC, \textit{Recommended Minimum}}
+\end{figure}
+
+\section{OpenSCAD}
+OpenSCAD to oprogramowanie pozwalające na projektowanie obiektów technicznych w 3D, które pozwala na ich opisywanie w sposób programistyczny. Kompilator interpretuje skrypt i na jego podstawie generowany jest model 3D. Dzięki wykorzystaniu zmiennych i funkcji, projekty są w łatwy sposób skalowalne a parametry modyfikowalne. Modelowanie polega w głównej mierze na wykorzystywaniu podstawowych operacji na bryłach do tworzenia złożonych obiektów. Przykładami takich operacji są: \textit{rotate, translate, scale, union, difference} \cite{openscad}.
+
+Program ten został wykorzystany do zaprojektowania obudowy nadajnika i późniejszego wytworzenia na drukarce 3D.
+
+
+\section{Node.js}
+\subsection{Express.js}
+\subsection{Inne biblioteki}
+\section{MongoDB}
+\section{Angular 4}
+\section{Ionic}
+\section{Narzędzia}
+\subsection{GIT}
+\subsection{Travis}
+\subsection{Heroku}
 
 \chapter{Część inżynierska}
-\cite{Bob}
 \cite{Node.js}
 
 \chapter{Podsumowanie}
