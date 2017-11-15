@@ -1,0 +1,74 @@
+%Przykładowy plik ułatwiający złożenie projektu dyplomowego inżynierskiego.
+%UWAGA: Generowany napis na stronie tytułowej o treści PROJEKT DYPLOMOWY INŻYNIERSKI został zaproponowany przeze mnie i nie jest, póki co, potwierdzony przez władze wydziału. Przed ostatecznym oddaniem tak złożonej pracy należy upewnić się jaka powinna być treść tego napisu. W momencie gdy uzyskam informację na temat treści tego napisu, dokonam niezbędnych zmian w źródłach.
+
+\documentclass[eng,printmode]{mgr}
+%opcje klasy dokumentu mgr.cls zostały opisane w dołączonej instrukcji
+
+%poniżej deklaracje użycia pakietów, usunąć to co jest niepotrzebne
+\usepackage{polski} %przydatne podczas składania dokumentów w j. polskim
+%\usepackage[polish]{babel}%alternatywnie do pakietu polski, wybrać jeden z nich
+\usepackage[utf8]{inputenc} %kodowanie znaków, zależne od systemu
+\usepackage[T1]{fontenc} %poprawne składanie polskich czcionek
+
+%pakiety do grafiki
+\usepackage{graphicx}
+\usepackage{subfigure}
+\usepackage{psfrag}
+
+%pakiety dodające dużo dodatkowych poleceń matematycznych
+\usepackage{amsmath}
+\usepackage{amsfonts}
+
+%pakiety wspomagające i poprawiające składanie tabel
+\usepackage{supertabular}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{hhline}
+
+%pakiet wypisujący na marginesie etykiety równań i rysunków zdefiniowanych przez \label{}, chcąc wygenerować finalną wersję dokumentu wystarczy usunąć poniższą linię
+\usepackage{showlabels}
+
+%definicje własnych poleceń
+\newcommand{\R}{I\!\!R} %symbol liczb rzeczywistych, działa tylko w trybie matematycznym
+\newtheorem{theorem}{Twierdzenie}[section] %nowe otoczenie do składania twierdzeń
+
+%dane do złożenia strony tytułowej
+\title{System antykradzieżowy kół samochodowych}
+\engtitle{Car wheels anti-theft framework}
+\author{Tomasz Borczyk}
+\supervisor{dr inż. Łukasz Jeleń}
+%\guardian{dr hab. inż. Imię Nazwisko Prof. PWr, I-6} %nie używać jeśli opiekun jest tą samą osobą co prowadzący pracę
+\field{Automatyka i Robotyka (AIR)}
+\specialisation{Technologie informacyjne w systemach automatyki (ART)}
+
+\begin{document}
+\bibliographystyle{plabbrv} %tylko gdy używamy BibTeXa, ustawia polski styl bibliografii
+\maketitle %polecenie generujące stronę tytułową
+\tableofcontents
+
+
+\chapter{Wstęp}
+Częstą 
+
+
+\section{Cel pracy}
+Celem pracy jest stworzenie systemu pozwalającego na lokalizację nadajnika GPS. 
+
+
+\section{Zakres pracy}
+
+\chapter{Część teoretyczna}
+
+\chapter{Część inżynierska}
+\cite{Bob}
+\cite{Node.js}
+
+\chapter{Podsumowanie}
+
+\addcontentsline{toc}{chapter}{Bibliografia}
+\bibliography{bibliografia} 
+%opcjonalnie może się tu pojawić spis rysunków i tabel
+% \listoffigures
+% \listoftables
+\end{document}
+
