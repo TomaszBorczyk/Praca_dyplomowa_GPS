@@ -10,6 +10,7 @@
 \usepackage[utf8]{inputenc} %kodowanie znaków, zależne od systemu
 \usepackage[T1]{fontenc} %poprawne składanie polskich czcionek
 
+\usepackage{url}
 %pakiety do grafiki
 \usepackage{graphicx}
 \usepackage{subfigure}
@@ -50,7 +51,7 @@
 
 
 \chapter{Wstęp}
-Wykorzystanie systemu GPS jest obecnie powszechnie stosowane do nawigacji w każdego rodzaju transporcie. Istnieje również inna, mniej powszechna grupa zastosowania mająca na celu lokalizację przedmiotów, często osobistych. Niektóre z lokalizatorów, takie jak TrackR \cite{TrackR}, wykorzystują łączność Bluetooth, co pozwala na miniaturyzację urządzenia oraz jego niskie zużycie energii. Niestety tego typu rozwiązanie działa tylko na niewielkie odległości od urządzenia, co wymaga budowania ogromnej sieci użytkowników w celu pokrycia dużej powierzchni, co jest praktycznie niemożliwe. Zaproponowane w pracy rozwiązanie wykorzystuje lokalizację GPS i łączność z internetem. Tego typu rozwiązanie mogą służyć do monitorowania położenia roweru, torebki/plecaka, dziecka, psa, samochodu czy też tytułowych kół samochodowych. Urządzenie w połączeniu z obsługującą je aplikacją służyłoby do odnajdywania zgub, a potencjalnie skradzionych przedmiotów. Praca ta prezentuje implementację tego rodzaju uniwersalnego systemu, który pozwoli użytkownikowi monitorować i zarządzać posiadanymi urządzeniami.
+Wykorzystanie systemu GPS jest obecnie powszechnie stosowane do nawigacji w każdego rodzaju transporcie. Istnieje również inna, mniej powszechna grupa zastosowania mająca na celu lokalizację przedmiotów, często osobistych. Niektóre z lokalizatorów, takie jak TrackR \cite{TrackR}, wykorzystują łączność Bluetooth, co pozwala na miniaturyzację urządzenia oraz jego niskie zużycie energii. Niestety tego typu rozwiązanie działa tylko na niewielkie odległości od urządzenia, co wymaga budowania ogromnej sieci użytkowników w celu pokrycia dużej powierzchni, co jest praktycznie niemożliwe. Zaproponowane w pracy rozwiązanie wykorzystuje lokalizację GPS i łączność z internetem. Tego typu rozwiązanie mogą służyć do monitorowania położenia roweru, torebki/plecaka, dziecka, psa, samochodu czy też tytułowych kół samochodowych. Urządzenie w połączeniu z obsługującą je aplikacją służyłoby do odnajdywania zgub, a potencjalnie skradzionych przedmiotów. Praca ta prezentuje implementację tego rodzaju uniwersalnego systemu, który pozwoli użytkownikowi monitorować i zarządzać posiadanymi urządzeniami. Aplikacja webowa stworzona jest w w stosie technologicznym \textit{MEAN} (MongoDB, Express, Angular, Node.js).
 
 \section{Cel pracy}
 Celem pracy jest stworzenie uniwersalnego systemu pozwalającego na lokalizację urządzenia GPS, w tym:
@@ -128,11 +129,54 @@ Program ten został wykorzystany do zaprojektowania obudowy nadajnika i późnie
 
 
 \section{Node.js}
+Jako technologię wykorzystaną do napisania strony serwerowej aplikacji wykorzystano Node.js. Jest to dynamicznie rozwijane i chętnie w ostatnich czasach używane środowisko uruchomieniowe open-source oparte na JavaScripcie. Udostępnia ono narzędzia do tworzenia aplikacji sieciowych: od uruchamiania skryptów po stronie serwera, do obsługiwania aplikacji internetowych. Charakterystyczną cechą Node.js jest asynchroniczność: wykonywanie operacji takich jak wczytywanie plików lub obsługa zapytań do bazy danych nie blokuje dalszego kodu przed wykonaniem. Dzięki temu czas, który w przypadku działania synchronicznego byłby stracony na wykonywanie danej operacji blokującej, jest zwalniany i możliwy do obsługi innych zapytań \cite{nodejs_blocking}.
 
+Dużym atutem korzystania z Node.js jest dostęp do npm, czyli menadżera paczek tworzonych przez społeczność. Jest to oprogramowanie o podobnej funkcjonalności co NuGet Package Manager dla .NET, RubyGem dla Ruby czy też pip dla Python. Paczki dostępne w npm to biblioteki, rozszerzenia a nawet całe frameworki. Obecnie npm posiada największą ze wszystkich menadżerów ilość paczek, których obecnie jest dostępnych ponad pół miliona \cite{module_counts}.
 
 \subsection{Express.js}
+Express.js to najczęściej pobierana paczka z npm - ponad 160 milionów pobrań (stan na 8 czerwca 2017) \cite{express_popularity}. Jest to framework dostarczający narzędzi do budowania aplikacji internetowych. Udostępnia takie funkcjonalności jak:
+\begin{itemize}
+\item obsługa routingu aplikacji do łatwego tworzenia API,
+\item funkcje middleware.
+\end{itemize}
+
+Poniższy przykład przedstawia stworzenie bazowego routingu:
+\begin{lstlisting}{javascript}
+app.get('/user', (req, res) => res.send('John Doe'));
+\end{lstlisting}
+Użytkownik po wysłaniu zapytania HTTP GET na dany adres, otrzyma w odpowiedzi nazwę 'John Doe'. Zmienna \textit{req} to obiekt który przechowuje dane o zapytaniu (nagłówki, treść, adres), a \textit{res} służy do wysłania odpowiedzi.
+
+Wykorzystanie middleware:
+\begin{lstlisting}{javascript}
+router.get('/user', isLoggedIn, sendUser);
+
+isLoggedIn = (req, res, next) => {
+	if(req.loggedIn) {
+		next();
+	} else {
+		res.send('not authenticated');
+	}
+};
+
+sendUser = (req, res) => res.send('John Doe');
+\end{lstlisting}
+W powyższym przykładzie funkcja isLoggedIn pełni rolę middleware, czyli pośredniczącej metody będącej kolejnym krokiem w pewnym procesie routingu, w tym przypadku dostępu do danych użytkownika. Wywołanie funkcji \textit{next()} powoduje przejście do kolejnej funkcji w cyklu (w przykładzie jest to \textit{sendUser}).
+%tutaj mógłby znaleźć się obrazek obrazujący middleware
 \subsection{Inne biblioteki}
+Inne warte uwagi biblioteki wykorzystane w projekcie:
+\begin{itemize}
+\item Passport.js
+\item Mongoose
+\item Socket.io
+\end{itemize}
+Passport.js to biblioteka implementująca autentykację użytkowników, dedykowana dla aplikacji opartych o Express.js. Jest sprawdzonym rozwiązaniem bardzo ważnej części oprogramowania, jakim jest bezpieczeństwo logowania i przebieg autoryzacji. Przy pomocy tej biblioteki możliwa jest implementacja logowania się przez strony społecznościowe (Facebook, Google, Twitter) a także tradycyjnie przez email i hasło. 
+
+Mongoose to biblioteka usprawniająca pracę z MongoDB. Baza ta jest elastyczna i nie wprowadza struktur encji w tradycyjnym kontekście baz danych. Jest to duży atut, jednak komplikuje to pracę na modelach z punktu widzenia programisty. Mongoose rozwiązuje ten problem dzięki możliwości tworzenia obiektów o zdefiniowanych polach i ich typach.
+
+Socket.io, wykorzystujący m.in. WebSocket (protokół bazujący na połączeniu TCP), pozwala na dwukierunkową komunikację w czasie rzeczywistym. W rezultacie serwer może wysyłać informacje stronie klienckiej, co w przypadku zapytań HTTP jest niemożliwe bez uprzedniej interakcji klienta. W pracy biblioteka ta jest wykorzystywana do tworzenia powiadomień o niepożądanym ruchu urządzenia GPS.
+
 \section{MongoDB}
+Baza danych MongoDB jest nierelacyjną bazą danych (NoSQL)
 \section{Angular 4}
 \section{Ionic}
 \section{Narzędzia}
