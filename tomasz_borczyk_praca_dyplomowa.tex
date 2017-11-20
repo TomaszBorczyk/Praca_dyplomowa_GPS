@@ -129,7 +129,9 @@ Program ten został wykorzystany do zaprojektowania obudowy nadajnika i późnie
 
 
 \section{Node.js}
-Jako technologię wykorzystaną do napisania strony serwerowej aplikacji wykorzystano Node.js. Jest to dynamicznie rozwijane i chętnie w ostatnich czasach używane środowisko uruchomieniowe open-source oparte na JavaScripcie. Udostępnia ono narzędzia do tworzenia aplikacji sieciowych: od uruchamiania skryptów po stronie serwera, do obsługiwania aplikacji internetowych. Charakterystyczną cechą Node.js jest asynchroniczność: wykonywanie operacji takich jak wczytywanie plików lub obsługa zapytań do bazy danych nie blokuje dalszego kodu przed wykonaniem. Dzięki temu czas, który w przypadku działania synchronicznego byłby stracony na wykonywanie danej operacji blokującej, jest zwalniany i możliwy do obsługi innych zapytań \cite{nodejs_blocking}.
+Jako technologię wykorzystaną do napisania strony serwerowej aplikacji wykorzystano Node.js. Wybór narzędzia był kierowany możliwością łatwej implementacji serwera API, który był naturalnym wyborem w przypadku komunikacji różnych platform klienckich z serwerem - jeden kod serwerowy obsługuje połączenia o różnych źródłach.
+
+Sam Node.js jestt dynamicznie rozwijanym i chętnie w ostatnich czasach używanym środowiskiem uruchomieniowym open-source opartym na JavaScripcie. Udostępnia ono narzędzia do tworzenia aplikacji sieciowych: od uruchamiania skryptów po stronie serwera, do obsługiwania aplikacji internetowych. Charakterystyczną cechą Node.js jest asynchroniczność: wykonywanie operacji takich jak wczytywanie plików lub obsługa zapytań do bazy danych nie blokuje dalszego kodu przed wykonaniem. Dzięki temu czas, który w przypadku działania synchronicznego byłby stracony na wykonywanie danej operacji blokującej, jest zwalniany i możliwy do obsługi innych zapytań \cite{nodejs_blocking}.
 
 Dużym atutem korzystania z Node.js jest dostęp do npm, czyli menadżera paczek tworzonych przez społeczność. Jest to oprogramowanie o podobnej funkcjonalności co NuGet Package Manager dla .NET, RubyGem dla Ruby czy też pip dla Python. Paczki dostępne w npm to biblioteki, rozszerzenia a nawet całe frameworki. Obecnie npm posiada największą ze wszystkich menadżerów ilość paczek, których obecnie jest dostępnych ponad pół miliona \cite{module_counts}.
 
@@ -178,14 +180,25 @@ Socket.io, wykorzystujący m.in. WebSocket (protokół bazujący na połączeniu
 \section{MongoDB}
 Baza danych MongoDB jest nierelacyjną bazą danych (NoSQL)
 \section{Angular 4}
+Jako narzędzie do stworzenia klienckiej strony aplikacji webowej został wybrany Angular 4. Jest to popularny framework pozwalający na tworzenie tzw. \textit{single page applications} - aplikacji webowych, w których nie występuje efekt przekierowań i przeładowywania strony, a dane zmieniają się automatycznie. Logika aplikacji pisana jest w TypeScript - języku stworzonym przez Microsoft, opartym na JavaScript i wprowadzającym takie funkcjonalności jak typowanie statyczne, klasy i interfejsy. TypeScript wciąż jest transpilowany do czystego JavaScript w celu możliwości uruchomienia przez przeglądarki internetowe, a więc zaletą tego języka jest przede wszystkim wygoda programowania i możliwość wykrywania błędów na poziomie kompilacji.
+
+Angular odznacza się modularnością w tworzeniu aplikacji. Opiera się on na tworzeniu komponentów będących poszczególnymi częściami aplikacji. Komponent steruje poszczególnym widokiem (będącym szablonem HTML), między którym zachodzi zwykle \textit{two-way data binding} - mechanizm pozwalający dynamicznie, w czasie rzeczywistym uaktualniać dane w momencie ich zmiany w szablonie HTML lub komponencie TypeScript.
 \section{Ionic}
+W ramach projektu specjalnościowego powstała także aplikacja mobilna stworzona za pomocą Ionic. Wybór narzędzia wynika z wykorzystania Angulara przez Ionic, co pozwala na wysoką reużywalność kodu i proste dostosowanie aplikacji do wymagań aplikacji na telefon.
 \section{Narzędzia}
 \subsection{GIT}
 \subsection{Travis}
 \subsection{Heroku}
 
 \chapter{Część inżynierska}
-\cite{Node.js}
+Cały system składa się z trzech głównych części:
+\begin{itemize}
+\item urządzenia lokalizującego
+\item serwera API
+\item aplikacji klienckich
+\end{itemize}
+
+W momencie wykrycia ruchu, urządzenie GPS łączy się z siecią Internet i rozpoczyna przesyłanie informacji o swojej lokalizacji na serwer. Wiadomości wysyłane są w równych interwałach. Serwer w momencie odebrania wiadomości uaktualnia bazę danych i w czasie rzeczywistym informuje aplikację kliencką o niepożądanym ruchu. Użytkownik ma możliwość podglądu obecnej pozycji urządzenia a także przeglądania historii wszystkich jego poprzednich aktywności.
 
 \chapter{Podsumowanie}
 
