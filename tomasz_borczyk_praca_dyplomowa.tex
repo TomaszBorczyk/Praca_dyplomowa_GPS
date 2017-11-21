@@ -200,6 +200,108 @@ Cały system składa się z trzech głównych części:
 
 W momencie wykrycia ruchu, urządzenie GPS łączy się z siecią Internet i rozpoczyna przesyłanie informacji o swojej lokalizacji na serwer. Wiadomości wysyłane są w równych interwałach. Serwer w momencie odebrania wiadomości uaktualnia bazę danych i w czasie rzeczywistym informuje aplikację kliencką o niepożądanym ruchu. Użytkownik ma możliwość podglądu obecnej pozycji urządzenia a także przeglądania historii wszystkich jego poprzednich aktywności.
 
+
+
+\section{Urządzenie GPS}
+
+\section{Serwer API}
+Serwer API pełni w projekcie kluczową rolę i jest jednocześnie uniwersalny dla każdego z pozostałych komponentów: łączą się z nim urządzenie GPS, aplikacja webowa oraz mobilna. Spełnia on następujące zadania:
+\begin{itemize}
+\item weryfikacja tożsamości użytkownika,
+\item utrzymywanie sesji,
+\item obsługa zapytań z aplikacji klienckich i urządzeń GPS,
+\item modyfikacja rekordów w bazie danych,
+\item tworzenie powiadomień dla aplikacji klienckich,
+\item serwowanie aplikacji webowej.
+\end{itemize}
+Serwer nie kontroluje routingu aplikacji, którego role całkowicie przejęły aplikacje klienckie. Jego celem jest przede wszystkim zapewnienie przepływu danych i ich zapisu.
+
+Autentykacja odbywa się przez tradycyjną parę e-mail i hasło. W momencie wysłania zapytania HTTP POST wraz z danymi użytkownika, serwer tworzy w bazie danych rekord użytkownika, hasło przetrzymywane jest w formie zahashowanej, wzmocnione dodatkowo parametrem \textit{salt}.
+
+Każde zapytanie przeznaczone dla zalogowanego użytkownika zabezpieczone jest przed wywołaniem przez nieautoryzowaną osobę. Wykorzystana jest do tego celu funkcjonalności frameworka Express.js: \textit{middleware} oraz sesja serwerowa. Dla każdego zapytania, nim zostanie przetworzone, sprawdzana jest tożsamość użytkownika. Ciasteczko wysyłane wraz z zapytaniem porównywane jest z danymi zapisanymi w sesji serwerowej, po czym następuje przyznanie lub odrzucenie dostępu do danych.
+
+%tutaj diagram przedstawiający schemat działania middleware na przykładze isLoggedIn 
+
+Serwer API eksponuje tzw. \textit{endpointy}, czyli punkty dostępowe pozwalające na kontakt z serwerem w celu modyfikacji lub pobrania danych. Każdy z endpointów dostępny jest pod konkretnym adresem URI i reaguje na odpowiednie zapytania HTTP: 
+\begin{center}
+ \begin{tabular}{||c c c||} 
+ \hline
+ URN & Metoda HTTP & Opis \\ [0.5ex] 
+ \hline\hline
+ /user/login & POST & Logowanie użytkownika \\ 
+ \hline
+ /user/register & POST & Rejestracja użytkownika\\
+ \hline
+ /user/logout & POST & Zamknięcie sesji serwerowej\\
+ \hline
+ /user/user & GET & Pobranie danych użytkownika (wyłączając hash i salt)\\
+ \hline
+ /device/register & POST & Rejestracja urządzenia GPS  \\  
+ \hline
+  /device/updatelocation & POST & Uaktualnienie pozycji urządzenia GPS  \\  
+ \hline
+  /device/changename & POST & Zmiana wyświetlanej nazwy urządzenia \\  
+ \hline
+\end{tabular}
+\end{center}
+
+Każdy z URN API poprzedzony jest przez /api/v0 w celu odzielenia go od reszty aplikacji. 
+Przykładowe URI pozwalające na logowanie:
+\begin{figure}[ht]
+\begin{center}
+\textit{https://gps-tracker.herokuapp.com/api/v0/user/login}
+\end{center}
+\end{figure}
+
+Dane przesyłane między aplikacjami są w formacie JSON. Ze względu na to, że serwer napisany jest w EcmaScript, a aplikacje klienckie w TypeScript, pozwala to na wysyłanie i odczytywanie danych pozbawione parsowania. Mając instancję modelu lub interfejsu w formie obiektu, np. danego użytkownika, możliwe jest w takiej formie przesłanie go, odczytanie po stronie odbierającej i natychmiastowe operowanie na zmiennych.
+
+W podobny sposób odbywają się operacje na bazie danych. MongoDB przechowuje dokumenty w postaci obiektów JSON, więc zapytania do bazy zwracają wyniki które natychmiast możemy przypisać do zmiennych i poddawać dalszym operacjom.
+
+Model użytkownika w bazie danych przewiduje następującą strukturę:
+\begin{lstlisting}{javascript}
+{
+    email: String,
+    urzadzenia: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: 'Device'
+        }
+    ],
+    dataUtworzenia: Date
+};
+\end{lstlisting}
+Tablica urządzeń zarejestrowanych przez użytkownika to w rzeczywistości tablica ID obiektów znajdujących się w osobnej kolekcji. Zabieg ten ma na celu niezależny dostęp do użytkowników i urządzeń. Jest to powodowane tym, że urządzenie GPS nie przechowuje informacji do jakiego użytkownika jest zarejestrowane. Przy każdej aktualizacji lokalizacji przez urządzenia konieczne byłoby iterowanie po użytkownikach aż do odnalezienia właściciela. Takie zapytanie byłoby wolne i bardzo często występujące. Zastosowana struktura dokumentów niweluje ten problem.
+
+\begin{lstlisting}{javascript}[extendedchars=false]
+{
+    IMEI: String,
+    nazwa: String,
+    daneGPS: [
+        {
+            czasObudzeniaGPS: String,
+            tablicaLokalizacji: [
+                {
+                    szerokoscGeograficzna: Number,
+                    dlugoscGeograficzna: Number,                    
+                    data: Date
+                }
+            ]
+        }
+    ],
+
+    dataUtworzenia: Date,
+    wlasciciel: {
+        type: Schema.Types.ObjectId,
+        ref: 'User'
+    }
+}
+\end{lstlisting}
+Dokument urządzenia, poza danymi identyfikującymi, przechowuje przede wszystkim informacje o położeniu. W celu ułatwienia użytkownikowi przeglądania historii lokalizacji, zostały one podzielone na grupy identyfikowane przez \textit{czasObudzeniaGPS}, będący momentem w którym urządzenie GPS przeszło w stan aktywacji na skutek wykrycia ruchu. Jest to unikalny parametr, jednoznacznie identyfikujący aktywność.
+
+
+
+
+
 \chapter{Podsumowanie}
 
 \addcontentsline{toc}{chapter}{Bibliografia}
