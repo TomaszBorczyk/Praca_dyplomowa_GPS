@@ -13,6 +13,7 @@
 \usepackage{url}
 %pakiety do grafiki
 \usepackage{graphicx}
+\graphicspath{{img/}}
 \usepackage{subfigure}
 \usepackage{psfrag}
 
@@ -85,6 +86,7 @@ Wykorzystane zostały:
 \item moduł UART GPS NEO-6M z wbudowaną anteną,
 \item czujnik wychylenia / wstrząsów firmy Waveshare,
 \item akumulator litowo-polimerowy 1S 500mAh.
+\item zewnętrzna antena na złącze U.FL
 \end{itemize}
 
 Główna płytka to Adafruit Feather 32u4 FONA. Wyposażona jest w mikrokontroler Atmega 32u4 oraz moduł GSM z wejściem na kartę SIM. Posiada wejścia microUSB, służące do programowania oraz zasilania płytki w trakcie debugowania, oraz zasilania dla akumulatora Li-Pol, który jest niezbędny do pracy z modułem GSM oraz zasilania układu w pracy zdalnej. Posiada piny do komunikacji po UART, co pozwala na prostą obsługę modułu GPS poprzez Serial port.
@@ -178,7 +180,7 @@ Mongoose to biblioteka usprawniająca pracę z MongoDB. Baza ta jest elastyczna 
 Socket.io, wykorzystujący m.in. WebSocket (protokół bazujący na połączeniu TCP), pozwala na dwukierunkową komunikację w czasie rzeczywistym. W rezultacie serwer może wysyłać informacje stronie klienckiej, co w przypadku zapytań HTTP jest niemożliwe bez uprzedniej interakcji klienta. W pracy biblioteka ta jest wykorzystywana do tworzenia powiadomień o niepożądanym ruchu urządzenia GPS.
 
 \section{MongoDB}
-Baza danych MongoDB jest nierelacyjną bazą danych (NoSQL)
+Baza danych MongoDB jest nierelacyjną bazą danych (NoSQL) popularnie wykorzystywaną w przypadku serwerów zbudowanych na Node.js i Express. Dokumenty w bazie danych przechowywane są w postaci obiektów JSON, dzięki czemu JavaScript natywnie je obsługuje bez potrzeby dodatkowej obróbki danych. Wyszukiwania i pracowanie na danych jest bardzo szybkie, jednak pozbawione tradycyjnych zapytań SQL.
 \section{Angular 4}
 Jako narzędzie do stworzenia klienckiej strony aplikacji webowej został wybrany Angular 4. Jest to popularny framework pozwalający na tworzenie tzw. \textit{single page applications} - aplikacji webowych, w których nie występuje efekt przekierowań i przeładowywania strony, a dane zmieniają się automatycznie. Logika aplikacji pisana jest w TypeScript - języku stworzonym przez Microsoft, opartym na JavaScript i wprowadzającym takie funkcjonalności jak typowanie statyczne, klasy i interfejsy. TypeScript wciąż jest transpilowany do czystego JavaScript w celu możliwości uruchomienia przez przeglądarki internetowe, a więc zaletą tego języka jest przede wszystkim wygoda programowania i możliwość wykrywania błędów na poziomie kompilacji.
 
@@ -186,9 +188,14 @@ Angular odznacza się modularnością w tworzeniu aplikacji. Opiera się on na t
 \section{Ionic}
 W ramach projektu specjalnościowego powstała także aplikacja mobilna stworzona za pomocą Ionic. Wybór narzędzia wynika z wykorzystania Angulara przez Ionic, co pozwala na wysoką reużywalność kodu i proste dostosowanie aplikacji do wymagań aplikacji na telefon.
 \section{Narzędzia}
+W trakcie tworzenia pracy wykorzystywane zostały różne narzędzia pomocnicze ułatwiające projektowanie, ale mające także wpływ na proces ciągłej integracji\cite{CI}. Ze względu na jednoosobowy charakter pracy proces ten był mocno uproszczony, jednak korzystano z repozytorium, automatyzacji budowania aplikacji webowej oraz automatycznego wdrażanie jej na zewnętrzny serwer.
 \subsection{GIT}
 \subsection{Travis}
-\subsection{Heroku}
+Jest to narzędzie pozwalające na automatyczne budowanie i testowanie aplikacji na dedykowanym serwerze. Proces ten uruchamia się w momencie aktualizacji repozytorium GIT. Wykonywane operacje są opisane w skrypcie umieszczonym wewnątrz każdego projektu. W ramach procesu możliwe jest wdrożenie aplikacji na zewnętrzny serwer.
+\subsection{Inne}
+Jako platformę serwerową wykorzystano Heroku\cite{heroku}, która pozwala na szybkie i bezproblemowe wdrażanie i uruchamianie aplikacji. Aby zachować ciągłość procesu i umożliwić Heroku otrzymywanie danych z serwerów Travis, potrzebne jest wygenerowanie unikatowego klucza aplikacji za pomocą Heroku CLI\cite{heroku_cli} i dodanie go do skryptu Travis.
+
+Baza danych została założona na serwisie mLab\cite{mlab}, oferującym darmowe rozwiązania wystarczające dla potrzeb tego projektu.
 
 \chapter{Część inżynierska}
 Cały system składa się z trzech głównych części:
@@ -203,6 +210,32 @@ W momencie wykrycia ruchu, urządzenie GPS łączy się z siecią Internet i roz
 
 
 \section{Urządzenie GPS}
+Lokalizator to jeden z pierwszych komponentów, który powstał w ramach projektu. Schemat jego działania przedstawiony jest na poniższym diagramie:
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{gps_flow.png}
+\caption{Diagram działania lokalizatora GPS}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.7]{gps_polaczenia.png}
+\caption{Schemat połączeń modułów elektrycznych}
+\end{figure}
+
+Urządzenie wykorzystuje bibliotekę \textit{Adafruit FONA} do obsługi modułu GSM. Udostępnia ona m.in. funkcje konfiguracji modułu, łączności z siecią i wysyłania zapytań HTTP przez GPRS
+
+Po starcie urządzenia odbywa się wstępna konfiguracja połączeń serial port oraz modułu GSM - konfiguracja sieci oraz połączenia z internetem za pomocą GPRS. Następnie, w nieskończonej pętli sprawdzany jest aktualny tryb pracy i wykonywane odpowiednie działania związane z danym trybem. 
+
+Zostały wydzielone cztery tryby: dwa główne, \textit{SLEEP} i \textit{TRACK} oraz dwa pomocnicze, \textit{ENTER\_SLEEP, ENTER\_TRACK}. Wyrażają one aktualny stan urządzania: w trybie \textit{SLEEP} lokalizator jest bezczynny, a w trybie \textit{TRACK} pracuje w trybie śledzenia pozycji, zbierając i wysyłając dane. Tryby pomocnicze występują, gdy obecny tryb główny ma zostać zmieniony na przeciwny. Wykonywane są w nich konfiguracje i reset zmiennych związanych z aktualnym stanem urządzania.
+
+Wykrycie ruchu odbywa się poprzez przerwanie, które występuje w momencie zmiany napięcia na pinie INT1, do którego podłączony jest czujnik wstrząsów Waveshare. W momencie wystąpienia przerwania, działanie programu zostaje przekierowane na funkcję obsługującą przerwanie. W tym konkretnym przypadku, funkcja ta zmienia tryb pracy urządzenia na \textit{ENTER\_TRACK}. W tym trybie pobierana jest początkowa pozycja i czas wybudzania, dzięki któremu dana aktywność jest później możliwa do zgrupowania. 
+
+W trybie śledzenia, program co iterację odczytuje dane GPS, wysyła je na serwer i sprawdza, czy urządzenie nie jest blisko położenia początkowego. Dane GPS odbierane są z modułu NEO-6M i przekazywane do instancji obiektu TinyGPS, który pochodzi z biblioteki o tej samej nazwie. Zdania NMEA są tam parsowane, a zwracane są potrzebne nam informacje: położenie geograficzne. Z zestawu danych w postaci identyfikatora urządzenia (kodu IMEI) oraz długości i szerokości geograficznej tworzony jest obiekt JSON, wysyłany przez HTTP na serwer API. Do pomiaru dystansu między punktami (początkowym a aktualnym) wykorzystywana jest \textit{Haversine formula}\cite{haversine}. 
+
+Na potrzeby testów zaprojektowana została również obudowa na całe urządzenie w programie OpenSCAD. Końcowy projekt wyeksportowano do formatu stl akceptowanego przez drukarki 3D. Początkowo obudowa wykonana została z ABS. Ze względu na dobór zbyt małych luzów i technikę druku 3D materiałem ABS, wydruk uległ uszkodzeniu przy próbach poprawek. Kolejny wydruk, po poprawkach projektu, używał materiału /tu wstaw materiał/.
+
+
 
 \section{Serwer API}
 Serwer API pełni w projekcie kluczową rolę i jest jednocześnie uniwersalny dla każdego z pozostałych komponentów: łączą się z nim urządzenie GPS, aplikacja webowa oraz mobilna. Spełnia on następujące zadania:
@@ -216,14 +249,15 @@ Serwer API pełni w projekcie kluczową rolę i jest jednocześnie uniwersalny d
 \end{itemize}
 Serwer nie kontroluje routingu aplikacji, którego role całkowicie przejęły aplikacje klienckie. Jego celem jest przede wszystkim zapewnienie przepływu danych i ich zapisu.
 
-Autentykacja odbywa się przez tradycyjną parę e-mail i hasło. W momencie wysłania zapytania HTTP POST wraz z danymi użytkownika, serwer tworzy w bazie danych rekord użytkownika, hasło przetrzymywane jest w formie zahashowanej, wzmocnione dodatkowo parametrem \textit{salt}.
+Uwierzytelnianie odbywa się przez tradycyjną parę e-mail i hasło. W momencie wysłania zapytania HTTP POST wraz z danymi użytkownika, serwer tworzy w bazie danych rekord użytkownika, hasło przetrzymywane jest w formie zahaszowanej, wzmocnione dodatkowo parametrem \textit{salt}.
 
 Każde zapytanie przeznaczone dla zalogowanego użytkownika zabezpieczone jest przed wywołaniem przez nieautoryzowaną osobę. Wykorzystana jest do tego celu funkcjonalności frameworka Express.js: \textit{middleware} oraz sesja serwerowa. Dla każdego zapytania, nim zostanie przetworzone, sprawdzana jest tożsamość użytkownika. Ciasteczko wysyłane wraz z zapytaniem porównywane jest z danymi zapisanymi w sesji serwerowej, po czym następuje przyznanie lub odrzucenie dostępu do danych.
 
 %tutaj diagram przedstawiający schemat działania middleware na przykładze isLoggedIn 
 
 Serwer API eksponuje tzw. \textit{endpointy}, czyli punkty dostępowe pozwalające na kontakt z serwerem w celu modyfikacji lub pobrania danych. Każdy z endpointów dostępny jest pod konkretnym adresem URI i reaguje na odpowiednie zapytania HTTP: 
-\begin{center}
+\begin{figure}
+\centering
  \begin{tabular}{||c c c||} 
  \hline
  URN & Metoda HTTP & Opis \\ [0.5ex] 
@@ -243,14 +277,16 @@ Serwer API eksponuje tzw. \textit{endpointy}, czyli punkty dostępowe pozwalają
   /device/changename & POST & Zmiana wyświetlanej nazwy urządzenia \\  
  \hline
 \end{tabular}
-\end{center}
+\caption{Tabela URI dostępnych w API}
+\end{figure}
+
+
 
 Każdy z URN API poprzedzony jest przez /api/v0 w celu odzielenia go od reszty aplikacji. 
 Przykładowe URI pozwalające na logowanie:
-\begin{figure}[ht]
-\begin{center}
+\begin{figure}
+\centering
 \textit{https://gps-tracker.herokuapp.com/api/v0/user/login}
-\end{center}
 \end{figure}
 
 Dane przesyłane między aplikacjami są w formacie JSON. Ze względu na to, że serwer napisany jest w EcmaScript, a aplikacje klienckie w TypeScript, pozwala to na wysyłanie i odczytywanie danych pozbawione parsowania. Mając instancję modelu lub interfejsu w formie obiektu, np. danego użytkownika, możliwe jest w takiej formie przesłanie go, odczytanie po stronie odbierającej i natychmiastowe operowanie na zmiennych.
@@ -300,6 +336,10 @@ Dokument urządzenia, poza danymi identyfikującymi, przechowuje przede wszystki
 
 
 
+
+\section{Aplikacja webowa}
+
+\section{Aplikacja mobilna}
 
 
 \chapter{Podsumowanie}
