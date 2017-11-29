@@ -30,7 +30,7 @@
 \usepackage{listings}
 
 %pakiet wypisujący na marginesie etykiety równań i rysunków zdefiniowanych przez \label{}, chcąc wygenerować finalną wersję dokumentu wystarczy usunąć poniższą linię
-\usepackage{showlabels}
+% \usepackage{showlabels}
 
 %definicje własnych poleceń
 \newcommand{\R}{I\!\!R} %symbol liczb rzeczywistych, działa tylko w trybie matematycznym
@@ -52,27 +52,29 @@
 
 
 \chapter{Wstęp}
-Wykorzystanie systemu GPS jest obecnie powszechnie stosowane do nawigacji w każdego rodzaju transporcie. Istnieje również inna, mniej powszechna grupa zastosowania mająca na celu lokalizację przedmiotów, często osobistych. Niektóre z lokalizatorów, takie jak TrackR \cite{TrackR}, wykorzystują łączność Bluetooth, co pozwala na miniaturyzację urządzenia oraz jego niskie zużycie energii. Niestety tego typu rozwiązanie działa tylko na niewielkie odległości od urządzenia, co wymaga budowania ogromnej sieci użytkowników w celu pokrycia dużej powierzchni, co jest praktycznie niemożliwe. Zaproponowane w pracy rozwiązanie wykorzystuje lokalizację GPS i łączność z internetem. Tego typu rozwiązanie mogą służyć do monitorowania położenia roweru, torebki/plecaka, dziecka, psa, samochodu czy też tytułowych kół samochodowych. Urządzenie w połączeniu z obsługującą je aplikacją służyłoby do odnajdywania zgub, a potencjalnie skradzionych przedmiotów. Praca ta prezentuje implementację tego rodzaju uniwersalnego systemu, który pozwoli użytkownikowi monitorować i zarządzać posiadanymi urządzeniami. Aplikacja webowa stworzona jest w w stosie technologicznym \textit{MEAN} (MongoDB, Express, Angular, Node.js).
+Systemy GPS są obecnie powszechnie stosowane do nawigacji w każdego rodzaju transporcie. Istnieje również inna, mniej powszechna grupa zastosowania mająca na celu lokalizację przedmiotów, często osobistych. Niektóre z lokalizatorów, takie jak TrackR \cite{TrackR}, wykorzystują łączność Bluetooth, co pozwala na miniaturyzację urządzenia oraz jego niskie zużycie energii. Niestety tego typu rozwiązanie działa tylko na niewielkie odległości urządzenia do odbiornika (np. telefonu), co wymaga budowania ogromnej sieci użytkowników w celu pokrycia dużej powierzchni, co jest praktycznie niemożliwe. Zaproponowana w pracy implementacja wykorzystuje lokalizację GPS i łączność z internetem. Tego typu rozwiązania mogą służyć do monitorowania położenia roweru, torebki/plecaka, dziecka, psa, samochodu czy też tytułowych kół samochodowych. Urządzenie w połączeniu z obsługującą je aplikacją służyłoby do odnajdywania zgub, a potencjalnie skradzionych przedmiotów. Praca ta prezentuje implementację tego rodzaju uniwersalnego systemu, który pozwoli użytkownikowi monitorować i zarządzać posiadanymi urządzeniami. Aplikacja webowa stworzona jest w stosie technologicznym \textit{MEAN} (MongoDB, Express, Angular, Node.js).
 
 \section{Cel pracy}
-Celem pracy jest stworzenie uniwersalnego systemu pozwalającego na lokalizację urządzenia GPS, w tym:
+Celem pracy jest stworzenie uniwersalnego systemu pozwalającego na lokalizację urządzenia GPS, zakładającego stworzenie lokalizatora GPS oraz aplikacji pozwalającej na lokalizowanie wielu urządzeń. Poszczególne elementy, które obejmuje praca to:
 \begin{itemize}
-\item integrację i oprogramowanie nadajnika GPS złożonego z płytki Adafruit i funkcjonalnych modułów,
-\item serwer w Node.js obsługującego przepływ danych i zapis danych w bazie danych MongoDB,
-\item aplikację webową stworzoną w Angular 4,
-\item aplikację mobilną stworzoną w Ionic.
+\item integracja i oprogramowanie nadajnika GPS złożonego z płytki Adafruit i funkcjonalnych modułów, łącznie z projektem i wykonaniem obudowy
+\item serwer w Node.js obsługującego przepływ i zapis informacji w bazie danych MongoDB,
+\item aplikacja webową stworzoną w Angular 4,
+\item aplikacja mobilną stworzoną w Ionic.
 \end{itemize}
-Tak stworzony system będzie został uruchomiony i wdrożony na zewnętrzne serwery.
+Dla tak zbudowanego projektu wykorzystane będą narzędzia usprawniające pracę i pozwalające na automatyczną integrację z zewnętrznymi serwerami.
 
 \section{Zakres pracy}
-Praca dzieli się na dwie części. W części teoretycznej opisane są:
+Praca dzieli się na dwie części. W części teoretycznej znajdującej się w rozdziale drugim opisane są środki wykorzystane do stworzenia projektu. Pozwala ona na ogóle zapoznanie się z technologiami i użytymi metodami. Do zbioru tego zaliczają się:
 \begin{itemize}
+\item pojęcia teoretyczne,
 \item moduły elektroniczne,
 \item biblioteki,
 \item platformy programistyczne,
 \item narzędzia pomocnicze.
 \end{itemize}
-Część inżynierska zajmuje się opisem implementacji funkcjonalności, procesem wykonanych prac i oprogramowaniem.
+
+Część inżynierska, którą obejmuje rozdział trzeci, zajmuje się przedstawieniem wykonanych prac, niektórych aspektów implementacji oraz opisem funkcjonowania stworzonych funkcjonalności, rozwiązań i procesów mających miejsce w całym systemie.
 
 \chapter{Część teoretyczna}
 W części tej uwaga będzie poświęcona technologiom i poszczególnym elementom, które zostały wykorzystane w trakcie projektu. 
@@ -90,6 +92,12 @@ Wykorzystane zostały:
 \end{itemize}
 
 Główna płytka to Adafruit Feather 32u4 FONA. Wyposażona jest w mikrokontroler Atmega 32u4 oraz moduł GSM z wejściem na kartę SIM. Posiada wejścia microUSB, służące do programowania oraz zasilania płytki w trakcie debugowania, oraz zasilania dla akumulatora Li-Pol, który jest niezbędny do pracy z modułem GSM oraz zasilania układu w pracy zdalnej. Posiada piny do komunikacji po UART, co pozwala na prostą obsługę modułu GPS poprzez Serial port.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.28]{board-modules.png}
+\caption{Wykorzystane moduły elektroniczne, w kolejności jak na liście na początku rozdziału}
+\end{figure}
 
 Moduł GPS wyposażony jest w interfejs UART, za pomocą którego następuje przesył danych. Po dostarczeniu zasilania 2,7V-5,0V automatycznie rozpocznie próby nawiązania połączenia z satelitami. W zależności od otoczenia i warunków pogodowych pierwsza połączenie może trwać od 1 do kilku minut. Po skutecznym połączeniu moduł rozpocznie wysyłanie danych NMEA. Dane te składają się ze zdań reprezentowanych przez początkowe słowo, które określa ich typ. Każde ze zdań zawiera pewien zestaw informacji, takie jak położenie, prędkość, dane satelitarne, status i inne dane wykorzystywane w transporcie morskim i powietrznym. Informacje powtarzają się między zdaniami, ale każdy zestaw jest unikalny \cite{nmea}.
 
@@ -133,7 +141,7 @@ Program ten został wykorzystany do zaprojektowania obudowy nadajnika i późnie
 \section{Node.js}
 Jako technologię wykorzystaną do napisania strony serwerowej aplikacji wykorzystano Node.js. Wybór narzędzia był kierowany możliwością łatwej implementacji serwera API, który był naturalnym wyborem w przypadku komunikacji różnych platform klienckich z serwerem - jeden kod serwerowy obsługuje połączenia o różnych źródłach.
 
-Sam Node.js jestt dynamicznie rozwijanym i chętnie w ostatnich czasach używanym środowiskiem uruchomieniowym open-source opartym na JavaScripcie. Udostępnia ono narzędzia do tworzenia aplikacji sieciowych: od uruchamiania skryptów po stronie serwera, do obsługiwania aplikacji internetowych. Charakterystyczną cechą Node.js jest asynchroniczność: wykonywanie operacji takich jak wczytywanie plików lub obsługa zapytań do bazy danych nie blokuje dalszego kodu przed wykonaniem. Dzięki temu czas, który w przypadku działania synchronicznego byłby stracony na wykonywanie danej operacji blokującej, jest zwalniany i możliwy do obsługi innych zapytań \cite{nodejs_blocking}.
+Sam Node.js jest dynamicznie rozwijanym i chętnie w ostatnich czasach używanym środowiskiem uruchomieniowym open-source opartym na JavaScripcie. Udostępnia ono narzędzia do tworzenia aplikacji sieciowych: od uruchamiania skryptów po stronie serwera, do obsługiwania aplikacji internetowych. Charakterystyczną cechą Node.js jest asynchroniczność: wykonywanie operacji takich jak wczytywanie plików lub obsługa zapytań do bazy danych nie blokuje dalszego kodu przed wykonaniem. Dzięki temu czas, który w przypadku działania synchronicznego byłby stracony na wykonywanie danej operacji blokującej, jest zwalniany i możliwy do obsługi innych zapytań \cite{nodejs_blocking}.
 
 Dużym atutem korzystania z Node.js jest dostęp do npm, czyli menadżera paczek tworzonych przez społeczność. Jest to oprogramowanie o podobnej funkcjonalności co NuGet Package Manager dla .NET, RubyGem dla Ruby czy też pip dla Python. Paczki dostępne w npm to biblioteki, rozszerzenia a nawet całe frameworki. Obecnie npm posiada największą ze wszystkich menadżerów ilość paczek, których obecnie jest dostępnych ponad pół miliona \cite{module_counts}.
 
@@ -189,9 +197,10 @@ Angular odznacza się modularnością w tworzeniu aplikacji. Opiera się on na t
 W ramach projektu specjalnościowego powstała także aplikacja mobilna stworzona za pomocą Ionic. Wybór narzędzia wynika z wykorzystania Angulara przez Ionic, co pozwala na wysoką reużywalność kodu i proste dostosowanie aplikacji do wymagań aplikacji na telefon.
 \section{Narzędzia}
 W trakcie tworzenia pracy wykorzystywane zostały różne narzędzia pomocnicze ułatwiające projektowanie, ale mające także wpływ na proces ciągłej integracji\cite{CI}. Ze względu na jednoosobowy charakter pracy proces ten był mocno uproszczony, jednak korzystano z repozytorium, automatyzacji budowania aplikacji webowej oraz automatycznego wdrażanie jej na zewnętrzny serwer.
-\subsection{GIT}
+\subsection{Git}
+System kontroli wersji Git\cite{git} pozwala nie tylko w efektywny sposób zarządzać projektem i jego wersjami, ale także na połączenie z innymi narzędziami (takimi jak systemy ciągłej integracji) za pomocą tak zwanych \textit{Webhooks}\cite{webhooks}, co pozwala na automatyczne uruchamianie procesów w przypadku np. zmiany w kodzie projektu.
 \subsection{Travis}
-Jest to narzędzie pozwalające na automatyczne budowanie i testowanie aplikacji na dedykowanym serwerze. Proces ten uruchamia się w momencie aktualizacji repozytorium GIT. Wykonywane operacje są opisane w skrypcie umieszczonym wewnątrz każdego projektu. W ramach procesu możliwe jest wdrożenie aplikacji na zewnętrzny serwer.
+Jest to narzędzie pozwalające na automatyczne budowanie i testowanie aplikacji na dedykowanym serwerze\cite{travis}. Proces ten uruchamia się w momencie aktualizacji repozytorium GIT. Wykonywane operacje są opisane w skrypcie umieszczonym wewnątrz każdego projektu. W ramach procesu możliwe jest wdrożenie aplikacji na zewnętrzny serwer.
 \subsection{Inne}
 Jako platformę serwerową wykorzystano Heroku\cite{heroku}, która pozwala na szybkie i bezproblemowe wdrażanie i uruchamianie aplikacji. Aby zachować ciągłość procesu i umożliwić Heroku otrzymywanie danych z serwerów Travis, potrzebne jest wygenerowanie unikatowego klucza aplikacji za pomocą Heroku CLI\cite{heroku_cli} i dodanie go do skryptu Travis.
 
@@ -210,16 +219,17 @@ W momencie wykrycia ruchu, urządzenie GPS łączy się z siecią Internet i roz
 
 
 \section{Urządzenie GPS}
-Lokalizator to jeden z pierwszych komponentów, który powstał w ramach projektu. Schemat jego działania przedstawiony jest na poniższym diagramie:
+Lokalizator to jeden z pierwszych komponentów, który powstał w ramach projektu. Schemat jego działania przedstawiony jest na diagramie \ref{fig:board-diagram}.
 \begin{figure}
 \centering
-\includegraphics[scale=0.5]{gps_flow.png}
+\includegraphics[scale=0.4]{gps_flow.png}
 \caption{Diagram działania lokalizatora GPS}
+\label{fig:board-diagram}
 \end{figure}
 
 \begin{figure}
 \centering
-\includegraphics[scale=0.7]{gps_polaczenia.png}
+\includegraphics[scale=0.6]{gps_polaczenia.png}
 \caption{Schemat połączeń modułów elektrycznych}
 \end{figure}
 
@@ -231,9 +241,39 @@ Zostały wydzielone cztery tryby: dwa główne, \textit{SLEEP} i \textit{TRACK} 
 
 Wykrycie ruchu odbywa się poprzez przerwanie, które występuje w momencie zmiany napięcia na pinie INT1, do którego podłączony jest czujnik wstrząsów Waveshare. W momencie wystąpienia przerwania, działanie programu zostaje przekierowane na funkcję obsługującą przerwanie. W tym konkretnym przypadku, funkcja ta zmienia tryb pracy urządzenia na \textit{ENTER\_TRACK}. W tym trybie pobierana jest początkowa pozycja i czas wybudzania, dzięki któremu dana aktywność jest później możliwa do zgrupowania. 
 
+\begin{figure}[!htbp]
+\centering
+\includegraphics[scale=0.4]{board-render.png}
+\caption{Render projektu wyświetlony w programie \textit{3D Builder} }
+\end{figure}
+
 W trybie śledzenia, program co iterację odczytuje dane GPS, wysyła je na serwer i sprawdza, czy urządzenie nie jest blisko położenia początkowego. Dane GPS odbierane są z modułu NEO-6M i przekazywane do instancji obiektu TinyGPS, który pochodzi z biblioteki o tej samej nazwie. Zdania NMEA są tam parsowane, a zwracane są potrzebne nam informacje: położenie geograficzne. Z zestawu danych w postaci identyfikatora urządzenia (kodu IMEI) oraz długości i szerokości geograficznej tworzony jest obiekt JSON, wysyłany przez HTTP na serwer API. Do pomiaru dystansu między punktami (początkowym a aktualnym) wykorzystywana jest \textit{Haversine formula}\cite{haversine}. 
 
-Na potrzeby testów zaprojektowana została również obudowa na całe urządzenie w programie OpenSCAD. Końcowy projekt wyeksportowano do formatu stl akceptowanego przez drukarki 3D. Początkowo obudowa wykonana została z ABS. Ze względu na dobór zbyt małych luzów i technikę druku 3D materiałem ABS, wydruk uległ uszkodzeniu przy próbach poprawek. Kolejny wydruk, po poprawkach projektu, używał materiału /tu wstaw materiał/.
+
+
+\subsubsection{Obudowa}
+W celu zapewnienia ochrony modułu i zwiększenia wygody użytkowania, zaprojektowana została również obudowa na całe urządzenie. Projekt został wykonany środowisku OpenSCAD. Zapewniono otwory montażowe, na wejście USB oraz przycisk.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[scale=0.08]{board-broken.jpg}
+\caption{Nieudany wydruk z ABS. Widoczne zniekształcenia i rozwarstwienia materiału}
+\end{figure}
+
+
+Końcowy projekt wyeksportowano do formatu stl akceptowanego przez drukarki 3D. Wydruki wykonywano na drukarce Ultimaker 3 Extended. W pierwszej próbie obudowa została wykonana z ABS. Ze względu na dobór zbyt małych luzów i technikę druku 3D materiałem ABS, wydruk uległ uszkodzeniu przy próbach spasowania. Plastik ABS charakteryzuje się dużą kurczliwością, dlatego wydruki nim są kłopotliwe i wymagają podwyższonej temperatury głowicy i stołu, w przeciwnym razie mogą wystąpić zniekształcenia i rozwarstwienia materiału\cite{abs}.
+
+\begin{figure}[!htbp]
+\centering
+\includegraphics[scale=0.08]{board-broken.jpg}
+\caption{Udany wydruk wykonany z PLA}
+\end{figure}
+
+
+Kolejny wydruk, po poprawkach projektu, został wykonany przy użyciu materiału PLA. Cechuje się on większą twardością i kruchością, ale drukowanie nim jest pozbawione wad dotyczących ABS.
+
+
+
 
 
 
@@ -293,46 +333,24 @@ Dane przesyłane między aplikacjami są w formacie JSON. Ze względu na to, że
 
 W podobny sposób odbywają się operacje na bazie danych. MongoDB przechowuje dokumenty w postaci obiektów JSON, więc zapytania do bazy zwracają wyniki które natychmiast możemy przypisać do zmiennych i poddawać dalszym operacjom.
 
-Model użytkownika w bazie danych przewiduje następującą strukturę:
-\begin{lstlisting}{javascript}
-{
-    email: String,
-    urzadzenia: [
-        {
-            type: Schema.Types.ObjectId,
-            ref: 'Device'
-        }
-    ],
-    dataUtworzenia: Date
-};
-\end{lstlisting}
+Model użytkownika w bazie danych przewiduje następującą strukturę \ref{fig:uzyt}.
+\begin{figure}
+\centering
+\hspace*{-2.3cm}
+\includegraphics[scale=0.5]{uzytkownik.png}
+\caption{Model użytkownika}
+\label{fig:uzyt}
+\end{figure}
 Tablica urządzeń zarejestrowanych przez użytkownika to w rzeczywistości tablica ID obiektów znajdujących się w osobnej kolekcji. Zabieg ten ma na celu niezależny dostęp do użytkowników i urządzeń. Jest to powodowane tym, że urządzenie GPS nie przechowuje informacji do jakiego użytkownika jest zarejestrowane. Przy każdej aktualizacji lokalizacji przez urządzenia konieczne byłoby iterowanie po użytkownikach aż do odnalezienia właściciela. Takie zapytanie byłoby wolne i bardzo często występujące. Zastosowana struktura dokumentów niweluje ten problem.
 
-\begin{lstlisting}{javascript}[extendedchars=false]
-{
-    IMEI: String,
-    nazwa: String,
-    daneGPS: [
-        {
-            czasObudzeniaGPS: String,
-            tablicaLokalizacji: [
-                {
-                    szerokoscGeograficzna: Number,
-                    dlugoscGeograficzna: Number,                    
-                    data: Date
-                }
-            ]
-        }
-    ],
+\begin{figure}
+\centering
+\includegraphics[scale=0.5]{urzadzenie.png}
+\caption{Model urządzenia}
+\label{fig:urz}
+\end{figure}
 
-    dataUtworzenia: Date,
-    wlasciciel: {
-        type: Schema.Types.ObjectId,
-        ref: 'User'
-    }
-}
-\end{lstlisting}
-Dokument urządzenia, poza danymi identyfikującymi, przechowuje przede wszystkim informacje o położeniu. W celu ułatwienia użytkownikowi przeglądania historii lokalizacji, zostały one podzielone na grupy identyfikowane przez \textit{czasObudzeniaGPS}, będący momentem w którym urządzenie GPS przeszło w stan aktywacji na skutek wykrycia ruchu. Jest to unikalny parametr, jednoznacznie identyfikujący aktywność.
+Dokument urządzenia, poza danymi identyfikującymi, przechowuje przede wszystkim informacje o położeniu. W celu ułatwienia użytkownikowi przeglądania historii lokalizacji, zostały one podzielone na grupy identyfikowane przez \textit{czas obudzenia urządzenia}, będący momentem w którym urządzenie GPS przeszło w stan aktywacji na skutek wykrycia ruchu. Jest to unikalny parametr, jednoznacznie identyfikujący aktywność.
 
 W momencie utworzenia nowej aktywności urządzenia bądź aktualizacji lokalizacji w ramach obecnej aktywności, serwer powiadamia o tym klienta w czasie rzeczywistym. Jest to rozwiązanie odwracające tradycyjną relację, w której to klient wysyła zapytania do serwera. Wykorzystana została do tego biblioteka Socket.io. W momencie nawiązania połączenia klient - serwer, użytkownikowi przypisywany jest utworzony socket i zapisywany po stronie serwera. W momencie utraty połączenia, socket i informacja o nim jest usuwana. Ten prosty system pozwala efektywnie zarządzać połączeniami w czasie rzeczywistym.
 
@@ -351,6 +369,12 @@ Aby utworzyć konto, użytkownik musi udać się do widoku rejestracji. Podane m
 \item potwierdzenie hasła.
 \end{itemize}
 
+\begin{figure}
+\centering
+\includegraphics[scale=0.3]{web-register-success.png}
+\caption{Ekran logowania po pomyślnej rejestracji}
+\end{figure}
+
 Uzupełnione dane są weryfikowane w czasie rzeczywistym (ich sprawdzenie nie wymaga interakcji ze strony użytkownika, jak kliknięcie przycisku). Reguły, które są stosowane podczas walidacji to:
 \begin{itemize}
 \item e-mail jest sprawdzany pod kątem formatu (wpisany tekst musi spełniać zasady struktury adresu e-mail),
@@ -360,6 +384,12 @@ Uzupełnione dane są weryfikowane w czasie rzeczywistym (ich sprawdzenie nie wy
 Pod każdym polem tekstowym wyświetlana jest informacja o błędnym uzupełnieniu, jeśli takowe ma miejsce.
 
 Po kliknięciu przycisku potwierdzającego rejestrację, dane są wysyłane na serwer i sprawdzane pod kątem istnienia użytkownika o podanym mailu. Jeśli użytkownik o danym adresie e-mail już istnieje, na stronie formularze zostanie wyświetlony ostrzegawczy pasek informujący o sytuacji. Wyświetlenie go nie usuwa danych z formularza, co pozwala na bezproblemową ich edycję.
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.3]{web-register-err.png}
+\caption{Ekran rejestracji w przypadku wystąpienia błędu}
+\end{figure}
 
 Jeśli użytkownik o podanym e-mailu nie został odnaleziony, rejestracja zostaje zatwierdzona (utworzony rekord w bazie danych). Następuje automatyczne przekierowanie na stronę logowania, a zielony pasek z komunikatem informuje o pomyślnym przebiegu operacji.
 
@@ -376,6 +406,7 @@ Widok aplikacji dzieli się na dwie główne części: boczny pasek wyboru wyśw
 \end{itemize}
 Użytkownik klikając na przycisk przełącza widok na powiązany kontekst. Kliknięcie przycisku wylogowania kończy sesję, usuwa informacje z danych przeglądarki, informuje serwer o zakończeniu połączenia przez Socket.io a następnie przekierowuje na stronę logowania.
 
+
 \subsubsection{Widok mapy}
 Główną częścią aplikacji jest widok mapy. Składa się on z dwóch części: boczne menu związane z widokiem mapy wizualnie rozszerzające główne menu aplikacji, oraz właściwy widok mapy.
 
@@ -388,9 +419,21 @@ Menu udostępnia następujące funkcjonalności:
 \end{itemize}
 Menu obsługuje skrajne przypadki, w których użytkownik nie posiada żadnych urządzeń, lub wybrane urządzenie nie posiada żadnych aktywności. W obu przypadkach wyświetlany jest stosowny komunikat.
 
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{web-map-location.png}
+\caption{Mapa z położeniami urządzenia i komunikatem o nowej lokalizacji}
+\end{figure}
+
 Dwie pierwsze pozycje reprezentowane są przez rozwijane menu. Urządzenie wybierane jest po jego nazwie, które domyślnie ustawione jest jako jego IMEI. Aktywności podzielone są względem czasu przebudzenia lokalizatora, ich wybór odbywa się więc po ich pełnej dacie wraz z godziną. Wybranie danej aktywności wyświetla punkty na mapie oraz ją centruje. Po otwarciu widoku mapy, domyślnie wybrane są pierwsze urządzanie z listy oraz jego najnowsza aktywność.
 
-Przyciski generowania trasy oraz przełączania jej widoczności związane są z właściwym widokiem mapy. Wykorzystując Google Maps API przyciski wywołują wygenerowanie i wyświetlenie trasy na podstawie lokalizacji użytkownika i aktualnego (najnowszego) położenia lokalizatora.
+Przyciski generowania trasy oraz przełączania jej widoczności związane są z właściwym widokiem mapy. Wykorzystując Google Maps API przyciski wywołują wygenerowanie i wyświetlenie trasy na początkowego i aktualnego (najnowszego) położenia lokalizatora.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{web-map-route.png}
+\caption{Utworzona trasa}
+\end{figure}
 
 Sama mapa, zbudowana za pomocą Angular Map Components, w prosty i czytelny sposób przedstawia punkty reprezentujące położenie lokalizatora w danej aktywności.
 
@@ -402,6 +445,12 @@ Drugi dostępny widok to panel urządzeń. Z jego poziomu użytkownik może:
 \item edytować wyświetlaną nazwę urządzenia.
 \end{itemize}
 Rejestrowanie nowego urządzenia w aplikacji odbywa się poprzez uzupełnienie pola o nr IMEI urządzenia. Pole jest sprawdzane pod względem zgodności z formatem IMEI (ciąg 15 cyfr), a w przypadku braku zgodności wyświetlany jest komunikat o niepoprawnym formacie. Po wysłaniu formularza i jeśli dane urządzenie nie jest już zarejestrowane, nowe urządzenie zostaje utworzone w bazie danych oraz dynamicznie w liście urządzeń po stronie aplikacji webowej.
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.3]{web-devices.png}
+\caption{Lista zarejestrowanych urządzeń}
+\end{figure}
 
 Lista urządzeń pozwala na wgląd w ich podstawowe informacje: numer IMEI, wyświetlana nazwa, data rejestracji oraz ostatnia aktywność. Udostępniona jest także możliwość edycji nazwy, dzięki czemu użytkownik może zmienić ją na zgodną z zastosowaniem urządzenia, opisową i przyjazną człowiekowi. Zmiana nazwa odzwierciedlana jest w bazie danych oraz danych lokalnych aplikacji.
 
@@ -428,13 +477,24 @@ Proces logowania odbywa się w taki sam sposób jak w aplikacji webowej, zaś re
 
 \subsubsection{Pomiar odległości}
 Większość tego widoku zajmuje mocno wyróżniający się element, wskazujący dystans od telefonu do ostatniego znanego położenia urządzenia. Podobnie jak ma to miejsce w aplikacji webowej, współrzędne lokalizatora są odbierane od serwera w momencie wystąpienia ich zmiany. Odbywa się to również przez bibliotekę Socket.io. Wskazywana w widoku odległość zmienia się zarówno przy ruchu telefonu, jak i przy wykrytym ruchu lokalizatora. 
+\begin{figure}[!hb]
+\centering
+\includegraphics[scale=0.2]{mobile-home2.png}
+\caption{Widok pomiaru dystansu}
+\end{figure}
 
 Dodatkowo, jeśli użytkownik znajdzie się w promieniu mniejszym niż 10 metrów od urządzenia lokalizującego, wytworzone będzie krótkie powiadomienie wibracjami. Działa to również dla zminimalizowanej aplikacji i przy zablokowanym telefonie. Opcja wibracji może zostać wyłączona poprzez zaznaczenie pola wyboru, znajdującego się w dolnej części widoku.
+
 
 Urządzenie do którego ma być wskazywany dystans jest wybierane z rozwijanego menu w górnej części widoku. W przypadku braku danych o położeniu dla danego lokalizatora (np. został nowo zarejestrowany) wyświetlone zostanie stosowna informacja.
 
 \subsubsection{Mapa}
 Do widoku tego przechodzimy klikając odpowiednią pozycję w menu głównym. Wygląd i dostępne opcje są takie same jak w przypadku widoku mapy dla aplikacji przeglądarkowej.
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.2]{mobile-map.png}
+\caption{Widok mapy}
+\end{figure}
 
 \subsubsection{Powiadomienia}
 W aplikacji wykorzystywane są dwa rodzaje powiadomień:
@@ -442,6 +502,18 @@ W aplikacji wykorzystywane są dwa rodzaje powiadomień:
 \item globalne powiadomienia Androida,
 \item wewnętrzne powiadomienie w aplikacji.
 \end{itemize}
+
+\begin{figure}[ht]
+\centering
+\includegraphics[scale=0.2]{mobile-warning.png}
+\caption{Ostrzeżenie o niepożądanej aktywności}
+\end{figure}
+
+\begin{figure}
+\centering
+\includegraphics[scale=0.3]{mobile-notif2.png}
+\caption{Globalne powiadomienie aplikacji w systemie Android}
+\end{figure}
 
 Obie instancje tworzone są w przypadku wykrycia nowej niepożądanej aktywności i informują o urządzeniu któego dotyczą. Pierwszy rodzaj powiadomienia widoczny jest z poziomu telefonu, bez konieczności przełączania się na aplikację GPS. Pozwala to na skuteczne informowanie użytkownika o zaszłych zmianach. Po kliknięciu powiadomienia zostajemy przekierowani do aplikacji.
 
@@ -452,6 +524,18 @@ Powiadomienie wewnątrz aplikacji ma postać okienka pop-up, które użytkownik 
 
 
 \chapter{Podsumowanie}
+Projekt został wykonany zgodnie z założeniami. Powstał system urządzenia śledzącego, serwera i aplikacji klienckich, co w całości pozwala na skuteczne śledzenie położenia lokalizatora. W ramach pracy powstało pojedyncze urządzenie GPS, jednak aplikacja pozwala na zarządzanie i monitorowanie wielu egzemplarzy. Zastosowanie systemu znacznie poszerzyło się w stosunku do tego zakładanego w tytule pracy.
+
+Ze względu na wiele aspektów występujących w projekcie, zbiór możliwości rozwoju jest bardzo duży. Począwszy od lokalizatora, elementy które mogłyby zostać dodane bądź rozbudowane w przyszłości:
+\begin{itemize}
+\item zdalna konfiguracja urządzenia GPS poprzez pobieranie danych z serwera,
+\item samodzielne wykonanie całości lokalizatora, minimalizując jego wymiary i koszta parokrotnie,
+\item raportowanie na SMS,
+\item stworzenie systemu weryfikacji dodawanego urządzenia,
+\item stworzenie testów jednostkowych i integracyjnych.
+\item modyfikacja i udostępnienie API oraz używanego formatu danych, aby stworzyć możliwość dodawania własnych urządzeń przez użytkowników (np. telefonów z odpowiednią aplikacją).
+\item rozbudowa aplikacji o statystyki, mapy położeń.
+\end{itemize}
 
 \addcontentsline{toc}{chapter}{Bibliografia}
 \bibliography{bibliografia} 
